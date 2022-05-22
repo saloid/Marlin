@@ -180,8 +180,8 @@ void Touch::touch(touch_control_t *control) {
       ui.refresh();
       break;
     case SLIDER:    hold(control); ui.encoderPosition = (x - control->x) * control->data / control->width; break;
-    case INCREASE:  hold(control, repeat_delay - 5); TERN(AUTO_BED_LEVELING_UBL, ui.external_control ? ubl.encoder_diff++ : ui.encoderPosition++, ui.encoderPosition++); break;
-    case DECREASE:  hold(control, repeat_delay - 5); TERN(AUTO_BED_LEVELING_UBL, ui.external_control ? ubl.encoder_diff-- : ui.encoderPosition--, ui.encoderPosition--); break;
+    case INCREASE:  hold(control, repeat_delay - 5); TERN(AUTO_BED_LEVELING_UBL, ui.external_control ? bedlevel.encoder_diff++ : ui.encoderPosition++, ui.encoderPosition++); break;
+    case DECREASE:  hold(control, repeat_delay - 5); TERN(AUTO_BED_LEVELING_UBL, ui.external_control ? bedlevel.encoder_diff-- : ui.encoderPosition--, ui.encoderPosition--); break;
     case HEATER:
       int8_t heater;
       heater = control->data;
@@ -287,15 +287,17 @@ bool Touch::get_point(int16_t *x, int16_t *y) {
 #if HAS_TOUCH_SLEEP
 
   void Touch::sleepTimeout() {
-    #if PIN_EXISTS(TFT_BACKLIGHT)
-      OUT_WRITE(TFT_BACKLIGHT_PIN, LOW);
+    #if HAS_LCD_BRIGHTNESS
+      ui.set_brightness(0);
+    #elif PIN_EXISTS(TFT_BACKLIGHT)
+      WRITE(TFT_BACKLIGHT_PIN, LOW);
     #endif
     next_sleep_ms = TSLP_SLEEPING;
   }
   void Touch::wakeUp() {
     if (isSleeping()) {
       #if HAS_LCD_BRIGHTNESS
-        ui._set_brightness();
+        ui.set_brightness(ui.brightness);
       #elif PIN_EXISTS(TFT_BACKLIGHT)
         WRITE(TFT_BACKLIGHT_PIN, HIGH);
       #endif
